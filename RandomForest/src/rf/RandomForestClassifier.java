@@ -1,17 +1,8 @@
 package rf;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-
-import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.classifiers.trees.RandomForest;
 import weka.core.Instances;
-import weka.core.SerializationHelper;
 
 public class RandomForestClassifier {
 
@@ -24,8 +15,11 @@ public class RandomForestClassifier {
 		 * Parametros posibles
 		 * ===================
 			maxDepth -- The maximum depth of the trees, 0 for unlimited.
-			numFeatures -- The number of attributes to be used in random selection (see RandomTree).
 			numTrees -- The number of trees to be generated.
+			
+			-No usados
+			
+			numFeatures -- The number of attributes to be used in random selection (see RandomTree).
 			seed -- The random number seed to be used.
 		 */
 		
@@ -35,8 +29,9 @@ public class RandomForestClassifier {
 		
 		
 		//Parametros temporales
-		int numTrees=30;
-		int numDepth=10;
+		int numTrees=10;
+		int numDepth=0;
+		int contDepth=0;
 		
 		
 		/*
@@ -48,42 +43,35 @@ public class RandomForestClassifier {
 		try {
 			
 			//Bucle con numTrees
-			
-			for(int i=0;i<numTrees;i++)
+			do
 			{
-				System.out.println("-----------------------------");
-				System.out.println("Number of trees being used: "+i);
-				for(int j=0;j<numDepth;j++)
-					{
-						bosque.setNumTrees(i);
-						bosque.setMaxDepth(j);
+				for(int i=0;i<numTrees;i++)
+				{
+					System.out.println("-----------------------------");
+					System.out.println("NUmero de arboles usados "+i+" con "+contDepth+" de profundidad.");
 					
-						evaluador = kfolder.getAccuracy(pData, bosque);
+							bosque.setNumTrees(i);
+							bosque.setMaxDepth(contDepth);
 						
-						fMeasureTemp = evaluador.weightedFMeasure();
+							evaluador = kfolder.getAccuracy(pData, bosque);
+							
+							fMeasureTemp = evaluador.weightedFMeasure();
+							
+							if(fMeasure<fMeasureTemp)
+							{
+								System.out.println("-- Este Fmeasure es mejor: "+fMeasure);
+								fMeasure=fMeasureTemp;
+								bestNumTrees = i;
+								bestDepth = contDepth;
+							}
 						
-						if(fMeasure<fMeasureTemp)
-						{
-							System.out.println("--This Fmeasure is better: "+fMeasure);
-							System.out.println("--With this depth: "+j);
-							fMeasure=fMeasureTemp;
-							bestNumTrees = i;
-							bestDepth = j;
-						}
-						else
-						{
-							System.out.println("--No improvement, depth; "+j);
-						}
-					}
+							
+				}
+			contDepth++;
+			}while(contDepth<numDepth);
 					
-			}
+			showResults(evaluador,bestNumTrees,bestNumTrees);
 			
-			System.out.println("El mejor Fmeasure: "+fMeasure);
-			System.out.println("Con tantos arboles: "+bestNumTrees);
-			System.out.println("Con tanta profundidad: "+bestDepth);
-			
-
-			saveData(pData, bestNumTrees, bestDepth, "Modelo");
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -92,7 +80,7 @@ public class RandomForestClassifier {
 		
 	}
 	
-	public void classificar(Instances pData,int pNumTrees,int pNumDepth)
+	public void reentrenar(Instances pData,int pNumTrees,int pNumDepth)
 	{
 		
 		Evaluation evaluador = null;
@@ -103,11 +91,10 @@ public class RandomForestClassifier {
 		
 		KfoldEvaluator judge = new KfoldEvaluator();
 		
-		
+		//blablabla
 		try {
 			
 			 evaluador = judge.getAccuracy(pData, woods);
-			
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -116,28 +103,23 @@ public class RandomForestClassifier {
 		
 		
 		judge.getAccuracy(pData, woods);
-		
-
 				
 	}
 
 	
-	private void saveData(Instances pData,int pNumTrees,int pNumDepth, String pName) throws Exception
+	private void showResults(Evaluation pEvaluador,int pNumTrees,int pNumDepth)
 	{
-		//Creamos clasificador
-		RandomForest cls = new RandomForest();
+		System.out.println("Resultados; ");
+		System.out.println("");
+		System.out.println("FMeasure");
 		
-		cls.setNumTrees(pNumTrees);
-		cls.setMaxDepth(pNumDepth);
 		
-		//train
-
-		pData.setClassIndex(pData.numAttributes() - 1);
-		cls.buildClassifier(pData);
-
 		
-		// serialize model		
-		SerializationHelper.write("\\modelo\\" + pName + ".mdl", cls);
-		System.out.println("he creado la carpeta");
+		
+	}
+	
+	private void saveData(Evaluation pEvualuator,int pNumTrees,int pNumDepth)
+	{
+		
 	}
 }

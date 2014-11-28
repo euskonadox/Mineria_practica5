@@ -19,7 +19,7 @@ public class Main {
 		 * Temporal para probar el programa 
 		 */
 		
-		String path = "C:/Users/Nadox/Desktop/colon.arff";
+		String path = "C:/Users/Portatil/Desktop/colon.arff";
 		FileManager file = new FileManager();
 		data = file.loadData(path);
 		

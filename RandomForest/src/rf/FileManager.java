@@ -14,7 +14,6 @@ public class FileManager {
 	
 	public FileManager(){}
 	
-	
 	public Instances loadData(String pPath)
 	{
 		String path=pPath;
