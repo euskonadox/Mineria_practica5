@@ -1,8 +1,17 @@
 package rf;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+
+import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.classifiers.trees.RandomForest;
 import weka.core.Instances;
+import weka.core.SerializationHelper;
 
 public class RandomForestClassifier {
 
@@ -73,6 +82,9 @@ public class RandomForestClassifier {
 			System.out.println("Con tantos arboles: "+bestNumTrees);
 			System.out.println("Con tanta profundidad: "+bestDepth);
 			
+
+			saveData(pData, bestNumTrees, bestDepth, "Modelo");
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -104,12 +116,28 @@ public class RandomForestClassifier {
 		
 		
 		judge.getAccuracy(pData, woods);
+		
+
 				
 	}
 
 	
-	private void saveData(Evaluation pEvualuator,int pNumTrees,int pNumDepth)
+	private void saveData(Instances pData,int pNumTrees,int pNumDepth, String pName) throws Exception
 	{
+		//Creamos clasificador
+		RandomForest cls = new RandomForest();
 		
+		cls.setNumTrees(pNumTrees);
+		cls.setMaxDepth(pNumDepth);
+		
+		//train
+
+		pData.setClassIndex(pData.numAttributes() - 1);
+		cls.buildClassifier(pData);
+
+		
+		// serialize model		
+		SerializationHelper.write("\\modelo\\" + pName + ".mdl", cls);
+		System.out.println("he creado la carpeta");
 	}
 }
