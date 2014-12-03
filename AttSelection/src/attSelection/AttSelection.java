@@ -1,7 +1,7 @@
 package attSelection;
 
-import weka.attributeSelection.InfoGainAttributeEval;
-import weka.attributeSelection.Ranker;
+import weka.attributeSelection.BestFirst;
+import weka.attributeSelection.CfsSubsetEval;
 import weka.classifiers.Evaluation;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.classifiers.trees.RandomForest;
@@ -10,14 +10,16 @@ import weka.core.Utils;
 import weka.filters.Filter;
 import weka.filters.supervised.attribute.AttributeSelection;
 
+import java.io.File;
 import java.io.FileReader;
+import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Random;
 
 /**
- * performs attribute selection using CfsSubsetEval and GreedyStepwise
- * and trains RandomForest with that.
+ * Módulo de Selección de Atributos
  *
- * @author ArkaitzMarcos
+ * por ArkaitzMarcos
  */
 
 public class AttSelection
@@ -28,28 +30,30 @@ public class AttSelection
 	public static void main(String[] args) throws Exception
 	{
 		// Cargamos el arff
-		System.out.println("Cargando datos...");
+		System.out.println("Cargando datos...\n");
 		Instances data = null;
 		data = AttSelection.loadFile(args[0]);
 		
-		// FilteredClassifier
-		AttSelection.useClassifier(data);
+		// Selección de Atributos
+		System.out.println("Seleccionando Atributos...\n");
+		AttSelection.filtradoAtts(data);
 		
-		// low-level
-		AttSelection.useLowLevel(data);
-		System.out.println("\nTERMINADO");
+		System.out.println("\nTERMINADO!!!");
 	}
 	
 	/*
 	 * FilteredClassifier
 	 */
-	private static void useClassifier(Instances data) throws Exception
+	private static void filtradoAtts(Instances data) throws Exception
 	{
+		// Creamos el clasificador FilteredClassifier, el clasificador base,
+		// el filtro, el evaluador y el criterio de busqueda
+		weka.attributeSelection.AttributeSelection attsel = new weka.attributeSelection.AttributeSelection();
 		FilteredClassifier classifier = new FilteredClassifier();
 		AttributeSelection filter = new AttributeSelection();
-		InfoGainAttributeEval eval = new InfoGainAttributeEval();
-		Ranker search = new Ranker();
+		CfsSubsetEval eval = new CfsSubsetEval();
 		RandomForest base = new RandomForest();
+		BestFirst search = new BestFirst();
 		
 		filter.setEvaluator(eval);
 		filter.setSearch(search);
@@ -57,32 +61,32 @@ public class AttSelection
 		classifier.setClassifier(base);
 		classifier.setFilter(filter);
 		
+		// Realizamos la evaluación de los datos con el FilteredClassifier
 		Evaluation evaluation = new Evaluation(data);
 		evaluation.crossValidateModel(classifier, data, 10, new Random(1));
-		System.out.println(evaluation.toSummaryString());
 		
+		// Ejecutamos el filtro
 		Instances newData = Filter.useFilter(data, filter);
-		//Imprime los nuevos datos, descomentar si quereis que la pantalla se os llene de kk
-		//System.out.println(newData);
-	}
-	
-	/*
-	 * uses the low level approach
-	 */
-	private static void useLowLevel(Instances data) throws Exception
-	{
-		weka.attributeSelection.AttributeSelection attsel = new weka.attributeSelection.AttributeSelection();
-		InfoGainAttributeEval eval = new InfoGainAttributeEval();
-		Ranker search = new Ranker();
+		
+		// Realizamos la selección de atributos
 		attsel.setEvaluator(eval);
 		attsel.setSearch(search);
 		attsel.SelectAttributes(data);
 		int[] indices = attsel.selectedAttributes();
-		System.out.println("selected attribute indices (starting with 0):\n" + Utils.arrayToString(indices));
+		Arrays.sort(indices);
+		System.out.println("Indices de los atributos seleccionados (empezando desde 0):\n" + Utils.arrayToString(indices));
+		
+		// Guardamos los nuevos datos en otro arff
+		File directorio = new File(".\\AttSelectionArff");
+		directorio.mkdirs();
+		PrintWriter printer = new PrintWriter(directorio.getPath() + "\\att_selection.arff");
+		printer.println(newData);
+		printer.close();
+		System.out.println("Nuevo arff creado en:\n" + directorio.getCanonicalPath() + "\\att_selection.arff");
 	}
 	
 	/*
-	 * Cargamos los datos
+	 * Cargador de datos
 	 */
 	private static Instances loadFile(String path) throws Exception
 	{
